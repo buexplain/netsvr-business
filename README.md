@@ -8,7 +8,9 @@
 1. 下载并启动网关服务：https://github.com/buexplain/netsvr/releases
 2. 在hyperf项目里面安装本包以及protobuf包：
    > composer require buexplain/netsvr-business
+   > 
    > php bin/hyperf.php vendor:publish buexplain/netsvr-business  
+   > 
    > composer require google/protobuf
 
 3. 新增路由文件`routes-websocket.php`
