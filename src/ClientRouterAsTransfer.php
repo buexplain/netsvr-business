@@ -24,27 +24,23 @@ use Netsvr\Cmd;
 use Netsvr\Transfer;
 
 /**
- * 客户端发消息的路由
+ * 客户端发消息的路由，这个路由实现是直接透传的，不解析
  */
-class ClientRouter implements ClientRouterInterface
+class ClientRouterAsTransfer implements ClientRouterInterface
 {
     /**
-     * 返回客户发送过来的消息携带的cmd
      * @return int
      */
     public function getCmd(): int
     {
-        //这里写死，具体需要使用者实现decode方法，从客户消息中解码出业务的cmd
         return Cmd::Transfer;
     }
 
     /**
-     * 解析客户发送过来的消息
      * @param Transfer $transfer
      * @return void
      */
     public function decode(Transfer $transfer): void
     {
-
     }
 }

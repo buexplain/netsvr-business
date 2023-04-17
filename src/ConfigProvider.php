@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace NetsvrBusiness;
 
 use NetsvrBusiness\Command\StartWorkerCommand;
+use NetsvrBusiness\Command\StatusWorkerCommand;
 use NetsvrBusiness\Command\StopWorkerCommand;
 use NetsvrBusiness\Contract\ClientRouterInterface;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
@@ -33,11 +34,12 @@ class ConfigProvider
             'dependencies' => [
                 DispatcherFactoryInterface::class => DispatcherFactory::class,
                 DispatcherInterface::class => Dispatcher::class,
-                ClientRouterInterface::class => ClientRouter::class,
+                ClientRouterInterface::class => ClientRouterAsJson::class,
             ],
             'commands' => [
                 StartWorkerCommand::class,
                 StopWorkerCommand::class,
+                StatusWorkerCommand::class,
             ],
             'publish' => [
                 [

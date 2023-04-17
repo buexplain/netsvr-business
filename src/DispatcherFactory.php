@@ -19,6 +19,7 @@ namespace NetsvrBusiness;
 
 
 use Hyperf\Context\ApplicationContext;
+use Hyperf\Contract\StdoutLoggerInterface;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
 use NetsvrBusiness\Contract\DispatcherInterface;
 
@@ -31,9 +32,12 @@ class DispatcherFactory implements DispatcherFactoryInterface
 
     public function __construct()
     {
+        $logger = ApplicationContext::getContainer()->get(StdoutLoggerInterface::class);
         foreach ($this->routes as $route) {
             if (file_exists($route)) {
                 require_once $route;
+            } else {
+                $logger->error('Router file ' . $route . ' does not exist');
             }
         }
     }

@@ -64,6 +64,9 @@ class StartWorkerCommand extends WorkerCommand
             $this->logger->error('Class "Google\Protobuf\Internal\Message" not found, you can run command: composer require google/protobuf');
             return 1;
         }
+        //获取一下调度器，提前把路由加载进来
+        ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get();
+        //开始连接网关
         $workers = intval($input->getOption('workers'));
         $pool = new Pool($workers > 0 ? $workers : swoole_cpu_num());
         $pool->set(['enable_coroutine' => true]);

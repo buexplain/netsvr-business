@@ -121,7 +121,7 @@ class Dispatcher implements DispatcherInterface
             $cmd = $router->getCmd();
         }
         if (!isset($this->routes[$cmd])) {
-            throw new InvalidArgumentException(sprintf('unknown cmd %d.', $cmd), $cmd);
+            throw new InvalidArgumentException(sprintf('Router dispatch failed, unknown cmd: %d, check the router file has been configured this cmd.', $cmd), $cmd);
         }
         $handler = $this->routes[$cmd];
         $container = ApplicationContext::getContainer();
