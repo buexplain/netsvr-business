@@ -20,10 +20,12 @@ declare(strict_types=1);
 namespace NetsvrBusiness\Command;
 
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
+use NetsvrBusiness\Contract\WorkerSocketInterface;
+use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
 use NetsvrBusiness\Exception\ConnectException;
-use NetsvrBusiness\Socket\WorkerSocket;
-use NetsvrBusiness\Socket\WorkerSocketManager;
 use Hyperf\Context\ApplicationContext;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Swoole\Coroutine;
 use Swoole\Process;
 use Swoole\Process\Pool;
@@ -53,6 +55,8 @@ class StartWorkerCommand extends WorkerCommand
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -71,7 +75,7 @@ class StartWorkerCommand extends WorkerCommand
         $pool = new Pool($workers > 0 ? $workers : swoole_cpu_num());
         $pool->set(['enable_coroutine' => true]);
         $pool->on('WorkerStart', function (Pool $pool, $workerProcessId) {
-            $manager = ApplicationContext::getContainer()->get(WorkerSocketManager::class);
+            $manager = ApplicationContext::getContainer()->get(WorkerSocketManagerInterface::class);
             $manager->loggerPrefix = "Business#$workerProcessId ";
             //监听进程关闭信号
             Process::signal(SIGTERM, function () use ($workerProcessId, $manager) {
@@ -92,7 +96,7 @@ class StartWorkerCommand extends WorkerCommand
                 $wg->add();
                 Coroutine::create(function () use ($wg, $item, $manager, $workerProcessId) {
                     try {
-                        $socket = make(WorkerSocket::class, $item);
+                        $socket = make(WorkerSocketInterface::class, $item);
                         $socket->loggerPrefix = "Business#$workerProcessId ";
                         $socket->connect();
                         $manager->add($socket);

@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness\Socket;
 
+use NetsvrBusiness\Contract\WorkerSocketInterface;
 use NetsvrBusiness\Exception\ConnectException;
 use Exception;
 use Hyperf\Context\ApplicationContext;
@@ -33,7 +34,7 @@ use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Throwable;
 
-class WorkerSocket
+class WorkerSocket implements WorkerSocketInterface
 {
     public string $loggerPrefix = '';
     protected string $host;

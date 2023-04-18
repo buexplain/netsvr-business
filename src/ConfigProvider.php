@@ -25,6 +25,10 @@ use NetsvrBusiness\Command\StopWorkerCommand;
 use NetsvrBusiness\Contract\ClientRouterInterface;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
 use NetsvrBusiness\Contract\DispatcherInterface;
+use NetsvrBusiness\Contract\WorkerSocketInterface;
+use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
+use NetsvrBusiness\Socket\WorkerSocket;
+use NetsvrBusiness\Socket\WorkerSocketManager;
 
 class ConfigProvider
 {
@@ -32,9 +36,12 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
+                WorkerSocketInterface::class => WorkerSocket::class,
+                WorkerSocketManagerInterface::class => WorkerSocketManager::class,
                 DispatcherFactoryInterface::class => DispatcherFactory::class,
                 DispatcherInterface::class => Dispatcher::class,
-                ClientRouterInterface::class => ClientRouterAsJson::class,
+                //这里默认采用透传的路由，使用者可以自己实现ClientRouterInterface接口，替换掉当前的配置
+                ClientRouterInterface::class => ClientRouterAsTransfer::class,
             ],
             'commands' => [
                 StartWorkerCommand::class,

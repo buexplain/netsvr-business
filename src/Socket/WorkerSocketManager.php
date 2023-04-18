@@ -19,6 +19,8 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness\Socket;
 
+use NetsvrBusiness\Contract\WorkerSocketInterface;
+use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
 use NetsvrBusiness\Exception\DuplicateServerIdException;
 use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\StdoutLoggerInterface;
@@ -29,11 +31,15 @@ use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Throwable;
 
-class WorkerSocketManager
+class WorkerSocketManager implements WorkerSocketManagerInterface
 {
     public string $loggerPrefix = '';
     protected ?Channel $receiveCh = null;
     protected StdoutLoggerInterface $logger;
+    /**
+     * @var WorkerSocketInterface[]
+     */
+    protected array $sockets = [];
 
     /**
      * @throws ContainerExceptionInterface
@@ -45,12 +51,7 @@ class WorkerSocketManager
         $this->logger = ApplicationContext::getContainer()->get(StdoutLoggerInterface::class);
     }
 
-    /**
-     * @var WorkerSocket[]
-     */
-    protected array $sockets = [];
-
-    public function add(WorkerSocket $socket): void
+    public function add(WorkerSocketInterface $socket): void
     {
         if (isset($this->sockets[$socket->getServerId()])) {
             throw new DuplicateServerIdException('Duplicate ServerId: ' . $socket->getServerId());
@@ -149,7 +150,7 @@ class WorkerSocketManager
     }
 
     /**
-     * 写入到当前所有网关连接中
+     * 发送消息给所有网关socket
      * @param string $data
      * @return void
      */
@@ -161,12 +162,23 @@ class WorkerSocketManager
     }
 
     /**
-     * 返回某个网关连接
+     * 根据网关服务唯一编号，返回某个网关socket
      * @param int $serverId
-     * @return WorkerSocket|null
+     * @return WorkerSocketInterface|null
      */
-    public function getSocket(int $serverId): ?WorkerSocket
+    public function getSocket(int $serverId): ?WorkerSocketInterface
     {
+        return $this->sockets[$serverId] ?? null;
+    }
+
+    /**
+     * 根据客户的唯一id，返回某个网关socket
+     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id的前两个字符是serverId的16就进制表示
+     * @return WorkerSocketInterface|null
+     */
+    public function getSocketByPrefixUniqId(string $uniqId): ?WorkerSocketInterface
+    {
+        $serverId = (int)hexdec(substr($uniqId, 0, 2));
         return $this->sockets[$serverId] ?? null;
     }
 }
