@@ -76,33 +76,45 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
     }
 
     /**
-     * @return void
-     * @throws Throwable
+     * @return bool
      */
-    public function register(): void
+    public function register(): bool
     {
         $wg = new Coroutine\WaitGroup();
-        $e = null;
+        $ok = true;
         foreach ($this->sockets as $socket) {
             $wg->add();
-            Coroutine::create(function () use ($wg, $socket, &$e) {
+            Coroutine::create(function () use ($wg, $socket, &$ok) {
                 try {
-                    $socket->register();
+                    $tmp = $socket->register();
+                    if ($tmp === false) {
+                        $ok = false;
+                    }
                 } catch (Throwable $throwable) {
-                    $e = $throwable;
+                    $message = sprintf(
+                        "%d --> %s in %s on line %d\nThrowable: %s",
+                        $throwable->getCode(),
+                        $throwable->getMessage(),
+                        $throwable->getFile(),
+                        $throwable->getLine(),
+                        get_class($throwable)
+                    );
+                    $this->logger->error($this->loggerPrefix . $message);
+                    $ok = false;
                 } finally {
                     $wg->done();
                 }
             });
         }
         $wg->wait();
-        if ($e) {
-            throw $e;
+        if ($ok === false) {
+            return false;
         }
         foreach ($this->sockets as $socket) {
             $socket->loopSend();
             $socket->loopHeartbeat();
         }
+        return true;
     }
 
     public function unregister(): void
@@ -173,7 +185,7 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
 
     /**
      * 根据客户的唯一id，返回某个网关socket
-     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id的前两个字符是serverId的16就进制表示
+     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id满足条件：前两个字符是网关服务的serverId的16进制表示
      * @return WorkerSocketInterface|null
      */
     public function getSocketByPrefixUniqId(string $uniqId): ?WorkerSocketInterface

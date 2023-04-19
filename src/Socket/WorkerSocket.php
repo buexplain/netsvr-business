@@ -87,7 +87,8 @@ class WorkerSocket implements WorkerSocketInterface
         $router = new Router();
         $router->setCmd(Cmd::Register);
         $reg = new Register();
-        $reg->setId($this->workerId);
+        $reg->setWorkerId($this->workerId);
+        $reg->setServerId($this->serverId);
         $reg->setProcessCmdGoroutineNum($this->processCmdGoroutineNum);
         $router->setData($reg->serializeToString());
         return $router->serializeToString();
@@ -98,12 +99,12 @@ class WorkerSocket implements WorkerSocketInterface
         $socket = new Coroutine\Socket(2, 1, 0);
         $socket->setProtocol([
             'open_length_check' => true,
-            //大端序
+            //大端序，详情请看：https://github.com/buexplain/netsvr/blob/main/internal/worker/manager/connProcessor.go#L127
             'package_length_type' => 'N',
             'package_length_offset' => 0,
             /**
              * 因为网关的包头包体协议的包头描述的长度是不含包头的，所以偏移4个字节
-             * @see https://github.com/buexplain/netsvr
+             * @see https://github.com/buexplain/netsvr/blob/main/README.md#业务进程与网关之间的tcp数据包边界处理
              */
             'package_body_offset' => 4,
             'package_max_length' => $this->packageMaxLength,
@@ -125,7 +126,8 @@ class WorkerSocket implements WorkerSocketInterface
             $this->repairMux->push(1);
             return;
         }
-        $this->logger->error(sprintf($this->loggerPrefix . 'repair socket %s:%s connect starting.', $this->host, $this->port));
+        //如果程序启动后，立马断开，反复出现这个日志错误，则有可能是business.php的serverId配置的与网关服务配置的serverId不一致
+        $this->logger->error(sprintf($this->loggerPrefix . 'repair socket %s:%s connect starting, because: %s', $this->host, $this->port, $this->socket->errMsg));
         $data = $this->makeRegisterProtocol();
         $data = pack('N', strlen($data)) . $data;
         while ($this->running === true) {
@@ -170,6 +172,7 @@ class WorkerSocket implements WorkerSocketInterface
 
     private function _send(string $data): int|false
     {
+        //大端序，详情请看：https://github.com/buexplain/netsvr/blob/main/internal/worker/manager/connProcessor.go#L211
         return $this->socket->send(pack('N', strlen($data)) . $data);
     }
 
@@ -179,6 +182,17 @@ class WorkerSocket implements WorkerSocketInterface
     public function register(): bool
     {
         if ($this->_send($this->makeRegisterProtocol()) !== false) {
+            Coroutine::sleep(1);
+            if ($this->socket->checkLiveness() === false) {
+                $this->logger->error(sprintf(
+                    $this->loggerPrefix . 'register socket %s:%s failed, because: %s, may be the serverId option in file business.php is incorrect.',
+                    $this->host,
+                    $this->port,
+                    $this->socket->errMsg,
+                    $this->serverId
+                ));
+                return false;
+            }
             if (!$this->waitUnregisterOk) {
                 $this->waitUnregisterOk = new Channel(1);
             }

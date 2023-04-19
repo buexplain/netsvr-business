@@ -23,7 +23,7 @@ interface WorkerSocketManagerInterface
 {
     public function add(WorkerSocketInterface $socket): void;
 
-    public function register(): void;
+    public function register(): bool;
 
     public function unregister(): void;
 
@@ -47,7 +47,7 @@ interface WorkerSocketManagerInterface
 
     /**
      * 根据客户在网关服务中的唯一id，返回某个网关socket
-     * @param string $uniqId 客户在网关服务中的唯一id，这个id的前两个字符是serverId的16进制表示
+     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id满足条件：前两个字符是网关服务的serverId的16进制表示
      * @return WorkerSocketInterface|null
      */
     public function getSocketByPrefixUniqId(string $uniqId): ?WorkerSocketInterface;

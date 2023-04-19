@@ -68,23 +68,19 @@ class StartWorkerCommand extends WorkerCommand
             $this->logger->error('Class "Google\Protobuf\Internal\Message" not found, you can run command: composer require google/protobuf');
             return 1;
         }
-        //获取一下调度器，提前把路由加载进来
+        //获取一下调度器，提前把路由加载进来，避免真正处理数据的时候发生路由注册的错误
         ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get();
         //开始连接网关
         $workers = intval($input->getOption('workers'));
         $pool = new Pool($workers > 0 ? $workers : swoole_cpu_num());
         $pool->set(['enable_coroutine' => true]);
         $pool->on('WorkerStart', function (Pool $pool, $workerProcessId) {
+            //记录主进程pid
+            if ($workerProcessId === 0) {
+                file_put_contents($this->pidFile, (string)$pool->master_pid);
+            }
             $manager = ApplicationContext::getContainer()->get(WorkerSocketManagerInterface::class);
             $manager->loggerPrefix = "Business#$workerProcessId ";
-            //监听进程关闭信号
-            Process::signal(SIGTERM, function () use ($workerProcessId, $manager) {
-                $this->running = false;
-                $this->logger->notice("Business#$workerProcessId starting unregister.");
-                $manager->unregister();
-                $this->logger->notice("Business#$workerProcessId starting disconnect.");
-                $manager->close();
-            });
             //连接所有的网关机器
             $config = config('business', []);
             if (empty($config)) {
@@ -115,12 +111,19 @@ class StartWorkerCommand extends WorkerCommand
                 return;
             }
             unset($wg, $config);
-            //记录主进程pid
-            if ($workerProcessId === 0) {
-                file_put_contents($this->pidFile, (string)$pool->master_pid);
-            }
             //向网关发起注册
-            $manager->register();
+            if ($manager->register() === false) {
+                $pool->shutdown();
+                return;
+            }
+            //监听进程关闭信号
+            Process::signal(SIGTERM, function () use ($workerProcessId, $manager) {
+                $this->running = false;
+                $this->logger->notice("Business#$workerProcessId starting unregister.");
+                $manager->unregister();
+                $this->logger->notice("Business#$workerProcessId starting disconnect.");
+                $manager->close();
+            });
             $this->logger->notice("Business#$workerProcessId started.");
             //不断的从网关读取数据，并分发到对应的控制器
             while (true) {
@@ -129,7 +132,7 @@ class StartWorkerCommand extends WorkerCommand
                     break;
                 }
                 //收到新数据，开一个协程去处理
-                Coroutine::create(function () use ($manager, $router, $workerProcessId) {
+                Coroutine::create(function () use ($router) {
                     try {
                         ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get()->dispatch($router);
                     } catch (Throwable $throwable) {
