@@ -17,26 +17,26 @@
 
 declare(strict_types=1);
 
+//如果一个网关服务承载不了业务的websocket连接数，可以再启动一个网关服务，这里支持配置多个网关服务，处理多个网关服务的websocket消息
 return [
-    //支持配置多个网关服务
     [
-        //网关地址
-        'host' => '127.0.0.1',
-        //网关的worker服务的端口
-        'port' => 6061,
-        //连接到网关的超时时间，单位秒
+        //网关服务的worker服的地址
+        'host' => env('NETSVR_WORKER_HOST', '127.0.0.1'),
+        //网关服务的worker服务的端口
+        'port' => env('NETSVR_WORKER_PORT', 6061),
+        //连接到网关服务的超时时间，单位秒
         'connectTimeout' => 1,
-        //网关服务唯一编号，如果配置错误，网关会拒绝business的注册请求，并关闭连接
-        'serverId' => 0,
+        //网关服务的唯一编号，如果配置错误，网关会拒绝business的注册请求，并关闭连接
+        'serverId' => env('NETSVR_SERVER_ID', 0),
         //当前业务进程的服务编号，取值区间是：[1,999]，业务层自己规划安排
         //所有发给网关的消息，如果需要当前业务进程处理，则必须是以该配置开头，因为网关是根据这个workerId来转发客户数据到业务进程的
         //客户发送的数据示例：001{"cmd":1,"data":"我的好朋友，你在吃什么？"}，其中001就是workerId，不足三位，前面补0
-        'workerId' => 1,
-        //该参数表示接下来，需要网关的worker服务器开启多少协程来处理本连接的请求
+        'workerId' => env('BUSINESS_WORKER_ID', 1),
+        //该参数表示接下来，需要网关服务的worker服务器开启多少协程来处理本连接的请求
         'processCmdGoroutineNum' => 10,
-        //保持连接活跃状态的心跳间隔，单位秒
+        //保持与网关服务的连接的活跃状态的心跳间隔，单位秒
         'heartbeatInterval' => 60,
-        //限制tcp数据包大小的最大值
-        'packageMaxLength' => 2 * 2 * 1024,
+        //限制与网关服务的连接的tcp数据包大小的最大值
+        'packageMaxLength' => 1024 * 1024 * 5,
     ],
 ];
