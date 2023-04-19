@@ -54,7 +54,7 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
     public function add(WorkerSocketInterface $socket): void
     {
         if (isset($this->sockets[$socket->getServerId()])) {
-            throw new DuplicateServerIdException('Duplicate ServerId: ' . $socket->getServerId());
+            throw new DuplicateServerIdException('serverId option in file business.php is duplicate: ' . $socket->getServerId());
         }
         $this->sockets[$socket->getServerId()] = $socket;
         //这里做一到中转，将每个socket发来的数据统一转发到一个channel里面

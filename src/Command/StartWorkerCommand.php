@@ -22,7 +22,6 @@ namespace NetsvrBusiness\Command;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
 use NetsvrBusiness\Contract\WorkerSocketInterface;
 use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
-use NetsvrBusiness\Exception\ConnectException;
 use Hyperf\Context\ApplicationContext;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -96,8 +95,8 @@ class StartWorkerCommand extends WorkerCommand
                         $socket->loggerPrefix = "Business#$workerProcessId ";
                         $socket->connect();
                         $manager->add($socket);
-                    } catch (ConnectException $connectException) {
-                        $message = sprintf("Business#%d Socket %s:%s %s", $workerProcessId, $item['host'], $item['port'], $connectException->getMessage());
+                    } catch (Throwable $throwable) {
+                        $message = sprintf("Business#%d Socket %s:%s %s", $workerProcessId, $item['host'], $item['port'], $throwable->getMessage());
                         $this->logger->error($message);
                         $this->running = false;
                     } finally {
