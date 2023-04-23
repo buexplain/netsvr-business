@@ -17,30 +17,23 @@
 
 declare(strict_types=1);
 
-namespace NetsvrBusiness;
-
-use NetsvrBusiness\Contract\ClientRouterInterface;
-use Netsvr\Cmd;
-use Netsvr\Transfer;
+namespace NetsvrBusiness\Contract;
 
 /**
- * 客户端发消息的路由，这个路由实现是直接透传的，不解析
+ * 客户发送的业务数据的编码解码接口
  */
-class ClientRouterAsTransfer implements ClientRouterInterface
+interface DataInterface
 {
     /**
-     * @return int
+     * 编码
+     * @return string
      */
-    public function getCmd(): int
-    {
-        return Cmd::Transfer;
-    }
+    public function encode(): string;
 
     /**
-     * @param Transfer $transfer
+     * 解码
+     * @param string $data
      * @return void
      */
-    public function decode(Transfer $transfer): void
-    {
-    }
+    public function decode(string $data): void;
 }

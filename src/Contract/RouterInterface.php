@@ -19,19 +19,47 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness\Contract;
 
-use Netsvr\Transfer;
-
-interface ClientRouterInterface
+/**
+ * 客户数据的路由的编解码接口
+ */
+interface RouterInterface
 {
     /**
-     * 返回客户发送过来的消息携带的cmd
+     * 编码
+     * @return string
+     */
+    public function encode(): string;
+
+    /**
+     * 解码
+     * @param string $data
+     * @return void
+     */
+    public function decode(string $data): void;
+
+    /**
+     * 获取命令
      * @return int
      */
     public function getCmd(): int;
 
     /**
-     * 解析客户发送过来的消息
-     * @param Transfer $transfer
+     * 设置命令
+     * @param int $cmd
+     * @return void
      */
-    public function decode(Transfer $transfer);
+    public function setCmd(int $cmd): void;
+
+    /**
+     * 获取命令携带的数据
+     * @return string
+     */
+    public function getData(): string;
+
+    /**
+     * 设置命令携带的数据
+     * @param string $data
+     * @return void
+     */
+    public function setData(string $data): void;
 }
