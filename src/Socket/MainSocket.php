@@ -22,7 +22,7 @@ namespace NetsvrBusiness\Socket;
 use Netsvr\RegisterReq;
 use Netsvr\RegisterResp;
 use Netsvr\RegisterRespCode;
-use NetsvrBusiness\Contract\WorkerSocketInterface;
+use NetsvrBusiness\Contract\MainSocketInterface;
 use NetsvrBusiness\Exception\ConnectException;
 use Exception;
 use Hyperf\Context\ApplicationContext;
@@ -36,7 +36,12 @@ use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Throwable;
 
-class WorkerSocket implements WorkerSocketInterface
+/**
+ * 主socket，用于：
+ * 1. 接收网关单向发给business的指令，具体移步：https://github.com/buexplain/netsvr-protocol#网关单向转发给业务进程的指令
+ * 2. business请求网关，无需网关响应的指令，具体移步：https://github.com/buexplain/netsvr-protocol#业务进程单向请求网关的指令
+ */
+class MainSocket implements MainSocketInterface
 {
     public string $loggerPrefix = '';
     protected string $host;
@@ -203,7 +208,7 @@ class WorkerSocket implements WorkerSocketInterface
             $data = substr($data, 4);
             $router = new Router();
             $router->mergeFromString($data);
-            //网关服务返回了其它的命令
+            //网关服务返回了其它的指令
             if ($router->getCmd() != Cmd::Register) {
                 $this->logger->error(sprintf(
                     $this->loggerPrefix . 'register socket %s:%s failed, expecting the netsvr to return a response to the register cmd.',
@@ -325,7 +330,7 @@ class WorkerSocket implements WorkerSocketInterface
         }
         //丢弃掉前4个字节，因为这4个字节是包头
         $data = substr($data, 4);
-        //读取到了心跳，或者是空字符串，则重新读取
+        //读取到了心跳，则重新读取
         if ($data == Constant::PONG_MESSAGE) {
             goto loop;
         }

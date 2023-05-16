@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-declare(strict_types=1);
-
 namespace NetsvrBusiness\Contract;
 
-use Netsvr\Router;
-
-/**
- * 调度器，根据路由文件的配置指令与控制器方法的映射关系，将网关转发的数据调度到具体的控制器的方法
- */
-interface DispatcherInterface
+interface TaskSocketPoolMangerInterface
 {
-    public function addRoute(int $cmd, array $handler): void;
+    /**
+     * 获取所有网关的连接
+     * @return array|TaskSocketInterface[]
+     */
+    public function getSockets(): array;
 
-    public function dispatch(Router $router): void;
+    /**
+     * 根据网关的serverId获取具体网关的连接
+     * @param int $serverId
+     * @return TaskSocketInterface|null
+     */
+    public function getSocketByServerId(int $serverId): ?TaskSocketInterface;
 }

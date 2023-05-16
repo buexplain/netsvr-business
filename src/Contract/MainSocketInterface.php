@@ -17,9 +17,7 @@
 
 namespace NetsvrBusiness\Contract;
 
-use Netsvr\Router;
-
-interface WorkerSocketInterface
+interface MainSocketInterface extends SocketInterface
 {
     public function connect(): void;
 
@@ -30,10 +28,6 @@ interface WorkerSocketInterface
     public function waitUnregisterOk(): void;
 
     public function close(): void;
-
-    public function send(string $data): void;
-
-    public function receive(): Router|false;
 
     public function loopHeartbeat(): void;
 

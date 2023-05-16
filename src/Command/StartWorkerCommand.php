@@ -20,8 +20,8 @@ declare(strict_types=1);
 namespace NetsvrBusiness\Command;
 
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
-use NetsvrBusiness\Contract\WorkerSocketInterface;
-use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
+use NetsvrBusiness\Contract\MainSocketInterface;
+use NetsvrBusiness\Contract\MainSocketManagerInterface;
 use Hyperf\Context\ApplicationContext;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -67,6 +67,7 @@ class StartWorkerCommand extends WorkerCommand
             $this->logger->error('Class "Google\Protobuf\Internal\Message" not found, you can run command: composer require google/protobuf');
             return 1;
         }
+        Coroutine::set(['hook_flags'=>SWOOLE_HOOK_ALL]);
         //获取一下调度器，提前把路由加载进来，避免真正处理数据的时候发生路由注册的错误
         ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get();
         //开始连接网关
@@ -78,10 +79,10 @@ class StartWorkerCommand extends WorkerCommand
             if ($workerProcessId === 0) {
                 file_put_contents($this->pidFile, (string)$pool->master_pid);
             }
-            $manager = ApplicationContext::getContainer()->get(WorkerSocketManagerInterface::class);
+            $manager = ApplicationContext::getContainer()->get(MainSocketManagerInterface::class);
             $manager->loggerPrefix = "Business#$workerProcessId ";
             //连接所有的网关机器
-            $config = (array)config('business.netsvrWorkers', []);
+            $config = (array)\Hyperf\Config\config('business.netsvrWorkers', []);
             if (empty($config)) {
                 $this->logger->error('The business service config business.php not found, may be not run command： php bin/hyperf.php vendor:publish buexplain/netsvr-business');
                 $this->running = false;
@@ -91,7 +92,7 @@ class StartWorkerCommand extends WorkerCommand
                 $wg->add();
                 Coroutine::create(function () use ($wg, $item, $manager, $workerProcessId) {
                     try {
-                        $socket = make(WorkerSocketInterface::class, $item);
+                        $socket = \Hyperf\Support\make(MainSocketInterface::class, $item);
                         $socket->loggerPrefix = "Business#$workerProcessId ";
                         $socket->connect();
                         $manager->add($socket);

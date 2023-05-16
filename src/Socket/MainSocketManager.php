@@ -19,8 +19,8 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness\Socket;
 
-use NetsvrBusiness\Contract\WorkerSocketInterface;
-use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
+use NetsvrBusiness\Contract\MainSocketInterface;
+use NetsvrBusiness\Contract\MainSocketManagerInterface;
 use NetsvrBusiness\Exception\DuplicateServerIdException;
 use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\StdoutLoggerInterface;
@@ -31,13 +31,13 @@ use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Throwable;
 
-class WorkerSocketManager implements WorkerSocketManagerInterface
+class MainSocketManager implements MainSocketManagerInterface
 {
     public string $loggerPrefix = '';
     protected ?Channel $receiveCh = null;
     protected StdoutLoggerInterface $logger;
     /**
-     * @var WorkerSocketInterface[]
+     * @var MainSocketInterface[]
      */
     protected array $sockets = [];
 
@@ -51,7 +51,7 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
         $this->logger = ApplicationContext::getContainer()->get(StdoutLoggerInterface::class);
     }
 
-    public function add(WorkerSocketInterface $socket): void
+    public function add(MainSocketInterface $socket): void
     {
         if (isset($this->sockets[$socket->getServerId()])) {
             throw new DuplicateServerIdException('serverId option in file business.php is duplicate: ' . $socket->getServerId());
@@ -98,7 +98,7 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
         foreach ($this->sockets as $socket) {
             $socket->loopSend();
             $socket->loopHeartbeat();
-            //这里做一到中转，将每个socket发来的数据统一转发到一个channel里面
+            //这里做一道中转，将每个socket发来的数据统一转发到一个channel里面
             Coroutine::create(function () use ($socket) {
                 while (true) {
                     $data = $socket->receive();
@@ -163,35 +163,19 @@ class WorkerSocketManager implements WorkerSocketManagerInterface
     }
 
     /**
-     * 发送消息给所有网关socket
-     * @param string $data
-     * @return void
+     * @return array|MainSocketInterface[]
      */
-    public function send(string $data): void
+    public function getSockets(): array
     {
-        foreach ($this->sockets as $socket) {
-            $socket->send($data);
-        }
+        return $this->sockets;
     }
 
     /**
-     * 根据网关服务唯一编号，返回某个网关socket
      * @param int $serverId
-     * @return WorkerSocketInterface|null
+     * @return MainSocketInterface|null
      */
-    public function getSocket(int $serverId): ?WorkerSocketInterface
+    public function getSocketByServerId(int $serverId): ?MainSocketInterface
     {
-        return $this->sockets[$serverId] ?? null;
-    }
-
-    /**
-     * 根据客户的唯一id，返回某个网关socket
-     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id满足条件：前两个字符是网关服务的serverId的16进制表示
-     * @return WorkerSocketInterface|null
-     */
-    public function getSocketByPrefixUniqId(string $uniqId): ?WorkerSocketInterface
-    {
-        $serverId = (int)hexdec(substr($uniqId, 0, 2));
         return $this->sockets[$serverId] ?? null;
     }
 }

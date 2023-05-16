@@ -19,9 +19,9 @@ namespace NetsvrBusiness\Contract;
 
 use Netsvr\Router;
 
-interface WorkerSocketManagerInterface
+interface MainSocketManagerInterface
 {
-    public function add(WorkerSocketInterface $socket): void;
+    public function add(MainSocketInterface $socket): void;
 
     public function register(): bool;
 
@@ -32,23 +32,14 @@ interface WorkerSocketManagerInterface
     public function close(): void;
 
     /**
-     * 发送消息给所有网关socket
-     * @param string $data
-     * @return void
+     * @return array|MainSocketInterface[]
      */
-    public function send(string $data): void;
+    public function getSockets(): array;
 
     /**
-     * 根据网关服务唯一编号，返回某个网关socket
+     * 返回某个网关socket
      * @param int $serverId
-     * @return WorkerSocketInterface|null
+     * @return MainSocketInterface|null
      */
-    public function getSocket(int $serverId): ?WorkerSocketInterface;
-
-    /**
-     * 根据客户在网关服务中的唯一id，返回某个网关socket
-     * @param string $uniqId 客户在网关服务中的唯一id，并且这个id满足条件：前两个字符是网关服务的serverId的16进制表示
-     * @return WorkerSocketInterface|null
-     */
-    public function getSocketByPrefixUniqId(string $uniqId): ?WorkerSocketInterface;
+    public function getSocketByServerId(int $serverId): ?MainSocketInterface;
 }

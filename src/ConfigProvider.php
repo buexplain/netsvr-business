@@ -19,6 +19,10 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness;
 
+use NetsvrBusiness\Contract\SocketLocatorInterface;
+use NetsvrBusiness\Contract\TaskSocketInterface;
+use NetsvrBusiness\Contract\TaskSocketPoolInterface;
+use NetsvrBusiness\Contract\TaskSocketPoolMangerInterface;
 use NetsvrBusiness\Router\TransferRouter;
 use NetsvrBusiness\Command\StartWorkerCommand;
 use NetsvrBusiness\Command\StatusWorkerCommand;
@@ -26,12 +30,16 @@ use NetsvrBusiness\Command\StopWorkerCommand;
 use NetsvrBusiness\Contract\RouterInterface;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
 use NetsvrBusiness\Contract\DispatcherInterface;
-use NetsvrBusiness\Contract\WorkerSocketInterface;
-use NetsvrBusiness\Contract\WorkerSocketManagerInterface;
+use NetsvrBusiness\Contract\MainSocketInterface;
+use NetsvrBusiness\Contract\MainSocketManagerInterface;
 use NetsvrBusiness\Dispatcher\Dispatcher;
 use NetsvrBusiness\Dispatcher\DispatcherFactory;
-use NetsvrBusiness\Socket\WorkerSocket;
-use NetsvrBusiness\Socket\WorkerSocketManager;
+use NetsvrBusiness\Socket\SocketLocator;
+use NetsvrBusiness\Socket\MainSocket;
+use NetsvrBusiness\Socket\MainSocketManager;
+use NetsvrBusiness\Socket\TaskSocket;
+use NetsvrBusiness\Socket\TaskSocketPool;
+use NetsvrBusiness\Socket\TaskSocketPoolManger;
 
 class ConfigProvider
 {
@@ -39,8 +47,12 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
-                WorkerSocketInterface::class => WorkerSocket::class,
-                WorkerSocketManagerInterface::class => WorkerSocketManager::class,
+                TaskSocketPoolMangerInterface::class => TaskSocketPoolManger::class,
+                TaskSocketPoolInterface::class=>TaskSocketPool::class,
+                TaskSocketInterface::class=>TaskSocket::class,
+                SocketLocatorInterface::class => SocketLocator::class,
+                MainSocketInterface::class => MainSocket::class,
+                MainSocketManagerInterface::class => MainSocketManager::class,
                 DispatcherFactoryInterface::class => DispatcherFactory::class,
                 DispatcherInterface::class => Dispatcher::class,
                 //这里默认采用透传的路由，使用者可以自己实现RouterInterface接口，替换掉当前的配置

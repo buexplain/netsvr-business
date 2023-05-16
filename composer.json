@@ -22,9 +22,10 @@
     "hyperf/di": "3.0.*",
     "hyperf/devtool": "3.0.*",
     "hyperf/config": "3.0.*",
-    "hyperf/logger": "3.0.*"
+    "hyperf/logger": "3.0.*",
+    "hyperf/pool": "^3.0"
   },
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
       "NetsvrBusiness\\": "src/"
