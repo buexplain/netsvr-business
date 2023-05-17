@@ -42,6 +42,8 @@ class TaskSocketPoolManger implements TaskSocketPoolMangerInterface
      */
     protected array $pools = [];
 
+    protected Channel $heartbeatIntervalCh;
+
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
@@ -49,6 +51,7 @@ class TaskSocketPoolManger implements TaskSocketPoolMangerInterface
     public function __construct()
     {
         $this->logger = ApplicationContext::getContainer()->get(StdoutLoggerInterface::class);
+        $this->heartbeatIntervalCh = new Channel();
         $config = (array)\Hyperf\Config\config('business.netsvrWorkers', []);
         if (empty($config)) {
             throw new RuntimeException('The business service config business.php not found, may be not run command： php bin/hyperf.php vendor:publish buexplain/netsvr-business', 1);
@@ -66,11 +69,16 @@ class TaskSocketPoolManger implements TaskSocketPoolMangerInterface
     protected function loopHeartbeat(TaskSocketPoolInterface $pool, float $heartbeatInterval)
     {
         Coroutine::create(function () use ($pool, $heartbeatInterval) {
-            $ch = new Channel();
-            while ($ch->pop($heartbeatInterval) === false) {
+            while ($this->heartbeatIntervalCh->pop($heartbeatInterval) === false && $this->heartbeatIntervalCh->errCode != SWOOLE_CHANNEL_CLOSED) {
                 $pool->loopHeartbeat();
             }
         });
+    }
+
+    public function close()
+    {
+        //关闭这个协程，否则进程因为还有协程活着，无法退出
+        $this->heartbeatIntervalCh->close();
     }
 
     /**

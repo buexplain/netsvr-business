@@ -15,22 +15,16 @@
  * limitations under the License.
  */
 
-namespace NetsvrBusiness\Contract;
+declare(strict_types=1);
 
-interface TaskSocketPoolMangerInterface
+namespace NetsvrBusiness\Event;
+
+/**
+ * business服务器开始事件
+ */
+class ServerStart
 {
-    public function close();
-
-    /**
-     * 获取所有网关的连接
-     * @return array|TaskSocketInterface[]
-     */
-    public function getSockets(): array;
-
-    /**
-     * 根据网关的serverId获取具体网关的连接
-     * @param int $serverId
-     * @return TaskSocketInterface|null
-     */
-    public function getSocketByServerId(int $serverId): ?TaskSocketInterface;
+    public function __construct(public int $workerProcessId, public int $masterProcessPid)
+    {
+    }
 }

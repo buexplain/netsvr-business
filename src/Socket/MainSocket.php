@@ -147,7 +147,7 @@ class MainSocket implements MainSocketInterface
                     continue;
                 }
                 if ($this->closed === true) {
-                    $this->logger->notice(sprintf($this->loggerPrefix . 'repair socket %s:%s connect ok.', $this->host, $this->port));
+                    $this->logger->debug(sprintf($this->loggerPrefix . 'repair socket %s:%s connect ok.', $this->host, $this->port));
                     $this->socket = $socket;
                     break;
                 }
@@ -159,7 +159,7 @@ class MainSocket implements MainSocketInterface
                         continue;
                     }
                     $this->socket = $socket;
-                    $this->logger->notice(sprintf($this->loggerPrefix . 'repair socket %s:%s connect and register ok.', $this->host, $this->port));
+                    $this->logger->debug(sprintf($this->loggerPrefix . 'repair socket %s:%s connect and register ok.', $this->host, $this->port));
                     break;
                 }
                 $socket->close();
@@ -180,7 +180,7 @@ class MainSocket implements MainSocketInterface
             throw new ConnectException($socket->errMsg, $socket->errCode);
         }
         $this->socket = $socket;
-        $this->logger->notice(sprintf($this->loggerPrefix . 'socket %s:%s connect ok.', $this->host, $this->port));
+        $this->logger->debug(sprintf($this->loggerPrefix . 'socket %s:%s connect ok.', $this->host, $this->port));
     }
 
     private function _send(string $data): int|false
@@ -290,7 +290,7 @@ class MainSocket implements MainSocketInterface
         $emptyNum = 0;
         while ($this->running) {
             Coroutine::sleep(1);
-            $this->logger->debug(sprintf($this->loggerPrefix . 'closing socket %s:%s, Wait for sendCh cleaning completed: %d.', $this->host, $this->port, $this->sendCh->length()));
+            $this->logger->debug(sprintf($this->loggerPrefix . 'closing socket %s:%s, Wait for sendCh cleaning completed: %d', $this->host, $this->port, $this->sendCh->length()));
             if ($this->sendCh->isEmpty()) {
                 $emptyNum++;
             } else {

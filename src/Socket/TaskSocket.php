@@ -100,7 +100,7 @@ class TaskSocket implements TaskSocketInterface
             }
         }
         $this->socket = $socket;
-        $this->logger->notice(sprintf('TaskSocket %s:%s connect ok.', $this->host, $this->port));
+        $this->logger->debug(sprintf('TaskSocket %s:%s connect ok.', $this->host, $this->port));
     }
 
     /**
@@ -126,7 +126,7 @@ class TaskSocket implements TaskSocketInterface
     {
         try {
             $this->socket?->close();
-            $this->logger->notice(sprintf('TaskSocket %s:%s close ok.', $this->host, $this->port));
+            $this->logger->debug(sprintf('TaskSocket %s:%s close ok.', $this->host, $this->port));
         } catch (Throwable) {
         }
     }

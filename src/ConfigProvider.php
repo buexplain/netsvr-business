@@ -23,6 +23,7 @@ use NetsvrBusiness\Contract\SocketLocatorInterface;
 use NetsvrBusiness\Contract\TaskSocketInterface;
 use NetsvrBusiness\Contract\TaskSocketPoolInterface;
 use NetsvrBusiness\Contract\TaskSocketPoolMangerInterface;
+use NetsvrBusiness\Listener\CloseListener;
 use NetsvrBusiness\Router\TransferRouter;
 use NetsvrBusiness\Command\StartWorkerCommand;
 use NetsvrBusiness\Command\StatusWorkerCommand;
@@ -46,10 +47,13 @@ class ConfigProvider
     public function __invoke(): array
     {
         return [
+            'listeners' => [
+                CloseListener::class,
+            ],
             'dependencies' => [
                 TaskSocketPoolMangerInterface::class => TaskSocketPoolManger::class,
-                TaskSocketPoolInterface::class=>TaskSocketPool::class,
-                TaskSocketInterface::class=>TaskSocket::class,
+                TaskSocketPoolInterface::class => TaskSocketPool::class,
+                TaskSocketInterface::class => TaskSocket::class,
                 SocketLocatorInterface::class => SocketLocator::class,
                 MainSocketInterface::class => MainSocket::class,
                 MainSocketManagerInterface::class => MainSocketManager::class,
