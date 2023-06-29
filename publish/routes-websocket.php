@@ -22,6 +22,7 @@ use Hyperf\Context\ApplicationContext;
 use Netsvr\Cmd;
 use NetsvrBusiness\Contract\DispatcherFactoryInterface;
 use NetsvrBusiness\Contract\DispatcherInterface;
+use App\Middleware\LoggerMiddleware;
 
 $dispatcher = ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get();
 

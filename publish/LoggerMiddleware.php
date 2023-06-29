@@ -17,6 +17,8 @@
 
 declare(strict_types=1);
 
+namespace App\Middleware;
+
 use Netsvr\ConnClose;
 use Netsvr\ConnOpen;
 use Netsvr\Transfer;
