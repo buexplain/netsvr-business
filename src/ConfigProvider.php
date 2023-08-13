@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace NetsvrBusiness;
 
+use NetsvrBusiness\Contract\BootstrapInterface;
 use NetsvrBusiness\Contract\ServerIdConvertInterface;
 use NetsvrBusiness\Contract\TaskSocketInterface;
 use NetsvrBusiness\Contract\TaskSocketPoolInterface;
@@ -51,6 +52,7 @@ class ConfigProvider
                 CloseListener::class,
             ],
             'dependencies' => [
+                BootstrapInterface::class => Bootstrap::class,
                 TaskSocketPoolMangerInterface::class => TaskSocketPoolManger::class,
                 TaskSocketPoolInterface::class => TaskSocketPool::class,
                 TaskSocketInterface::class => TaskSocket::class,
