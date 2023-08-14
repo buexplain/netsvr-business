@@ -82,20 +82,26 @@ class NetBus
      */
     public static function connOpenCustomUniqIdToken(int $serverId): array
     {
-        $socket = self::getTaskSocketByServerId($serverId);
         $router = new Router();
         $router->setCmd(Cmd::ConnOpenCustomUniqIdToken);
-        $socket->send($router->serializeToString());
-        $router = $socket->receive();
-        if ($router === false) {
-            throw new ErrorException('call Cmd::ConnOpenCustomUniqIdToken failed because the connection to the netsvr was disconnected');
+        try {
+            $socket = self::getTaskSocketByServerId($serverId);
+            $socket->send($router->serializeToString());
+            $router = $socket->receive();
+            if ($router === false) {
+                throw new ErrorException('call Cmd::ConnOpenCustomUniqIdToken failed because the connection to the netsvr was disconnected');
+            }
+            $resp = new ConnOpenCustomUniqIdTokenResp();
+            $resp->mergeFromString($router->getData());
+            return [
+                'uniqId' => $resp->getUniqId(),
+                'token' => $resp->getToken(),
+            ];
+        } finally {
+            if (isset($socket) && $socket instanceof TaskSocketInterface) {
+                $socket->release();
+            }
         }
-        $resp = new ConnOpenCustomUniqIdTokenResp();
-        $resp->mergeFromString($router->getData());
-        return [
-            'uniqId' => $resp->getUniqId(),
-            'token' => $resp->getToken(),
-        ];
     }
 
     /**
