@@ -70,12 +70,28 @@ class TaskSocket implements TaskSocketInterface
         $this->connect();
     }
 
+    protected function disconnect()
+    {
+        try {
+            if ($this->socket instanceof Coroutine\Socket) {
+                $socket = $this->socket;
+                $this->socket = null;
+                $this->logger->info(sprintf('TaskSocket %s:%s close ok.', $this->host, $this->port));
+                $socket->close();
+            }
+        } catch (Throwable) {
+        }
+    }
+
     /**
      * @param bool $throwErr
      * @return void
      */
     protected function connect(bool $throwErr = true): void
     {
+        //丢弃现有的socket连接
+        $this->disconnect();
+        //构造新的连接
         $socket = new Coroutine\Socket(2, 1, 0);
         $socket->setProtocol([
             'open_length_check' => true,
@@ -99,7 +115,7 @@ class TaskSocket implements TaskSocketInterface
             }
         }
         $this->socket = $socket;
-        $this->logger->debug(sprintf('TaskSocket %s:%s connect ok.', $this->host, $this->port));
+        $this->logger->info(sprintf('TaskSocket %s:%s connect ok.', $this->host, $this->port));
     }
 
     /**
@@ -123,11 +139,7 @@ class TaskSocket implements TaskSocketInterface
 
     public function __destruct()
     {
-        try {
-            $this->socket?->close();
-            $this->logger->debug(sprintf('TaskSocket %s:%s close ok.', $this->host, $this->port));
-        } catch (Throwable) {
-        }
+        $this->disconnect();
     }
 
     /**
@@ -139,6 +151,8 @@ class TaskSocket implements TaskSocketInterface
         $data = $this->socket->recvPacket();
         //读取失败了
         if ($data === '' || $data === false) {
+            //丢弃该socket连接
+            $this->disconnect();
             return false;
         }
         //丢弃掉前4个字节，因为这4个字节是包头
@@ -154,6 +168,10 @@ class TaskSocket implements TaskSocketInterface
 
     public function release(): void
     {
-        $this->pool->release($this);
+        if ($this->socket instanceof Coroutine\Socket) {
+            $this->pool->release($this);
+        } else {
+            $this->pool->release(null);
+        }
     }
 }

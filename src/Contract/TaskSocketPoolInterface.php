@@ -28,8 +28,8 @@ interface TaskSocketPoolInterface
 
     /**
      * 将连接归还给连接池
-     * @param TaskSocketInterface $socket
+     * @param TaskSocketInterface|null $socket
      * @return void
      */
-    public function release(TaskSocketInterface $socket): void;
+    public function release(TaskSocketInterface|null $socket): void;
 }
