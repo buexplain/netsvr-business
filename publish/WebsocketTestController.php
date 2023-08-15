@@ -27,6 +27,7 @@ use Netsvr\Transfer;
 use NetsvrBusiness\NetBus;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Throwable;
 
 class WebsocketTestController
 {
@@ -35,7 +36,7 @@ class WebsocketTestController
      * @param ConnOpen $connOpen
      * @return void
      * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws NotFoundExceptionInterface|Throwable
      */
     public function onOpen(ConnOpen $connOpen): void
     {
@@ -55,12 +56,15 @@ class WebsocketTestController
      * @param RouterInterface $clientRouter 客户发送业务数据时，使用路由
      * @return void
      * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws NotFoundExceptionInterface|Throwable
      */
     public function onMessage(Transfer $transfer, RouterInterface $clientRouter): void
     {
         $clientRouter->setData($transfer->getUniqId() . '：' . $clientRouter->getData());
-        NetBus::broadcast($clientRouter->encode());
+        //下面这两行代码之所以写的有点浪费，纯粹是为了配合压测命令： php bin/hyperf.php websocket:stress
+        if (!empty(NetBus::checkOnline($transfer->getUniqId()))) { //这行代码走的是TaskSocket发送出去的
+            NetBus::singleCast($transfer->getUniqId(), $clientRouter->getData()); //这行代码走的是MainSocket或TaskSocket发送出去的，优先走MainSocket
+        }
     }
 
     /**
@@ -68,7 +72,7 @@ class WebsocketTestController
      * @param ConnClose $connClose
      * @return void
      * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws NotFoundExceptionInterface|Throwable
      */
     public function onClose(ConnClose $connClose): void
     {

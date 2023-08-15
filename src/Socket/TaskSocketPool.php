@@ -80,18 +80,10 @@ class TaskSocketPool implements TaskSocketPoolInterface
                 throw $throwable;
             }
         }
-        if ($retry === false) {
-            //也许此时有连接呢，快速拿一次，拿不到就抛异常
-            $connection = $this->pool->length() > 0 ? $this->pool->pop(0.02) : false;
-            if ($connection instanceof TaskSocketInterface) {
-                return $connection;
-            }
-            throw new RuntimeException('TaskSocketPool pool exhausted. Cannot establish new connection before wait_timeout.');
-        }
         $connection = $this->pool->pop($this->config['taskSocketPoolWaitTimeout']);
         if (!$connection instanceof TaskSocketInterface) {
             //从连接池内获取连接失败，再次检查是否可以构建新连接，如果可以，则再次尝试构建一个新的连接
-            if ($this->pool->length() === 0 && $this->num < $this->pool->capacity) {
+            if ($retry === true && $this->pool->length() === 0 && $this->num < $this->pool->capacity) {
                 $retry = false;
                 goto loop;
             }

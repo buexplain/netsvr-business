@@ -47,6 +47,7 @@ class ConfigProvider
 {
     public function __invoke(): array
     {
+        defined('BASE_PATH') or define('BASE_PATH', dirname(__DIR__, 4));
         return [
             'listeners' => [
                 CloseListener::class,
@@ -87,6 +88,12 @@ class ConfigProvider
                     'description' => 'The controller of netsvr-business.',
                     'source' => __DIR__ . '/../publish/WebsocketTestController.php',
                     'destination' => BASE_PATH . '/app/Controller/WebsocketTestController.php',
+                ],
+                [
+                    'id' => 'command',
+                    'description' => 'The command of netsvr-business.',
+                    'source' => __DIR__ . '/../publish/WebsocketStressCommand.php',
+                    'destination' => BASE_PATH . '/app/Command/WebsocketStressCommand.php',
                 ],
                 [
                     'id' => 'middleware',

@@ -68,7 +68,7 @@ class StartWorkerCommand extends WorkerCommand
     {
         Coroutine::set(['hook_flags' => SWOOLE_HOOK_ALL]);
         if ($this->isRun()) {
-            $this->logger->debug('The business service is running.');
+            $this->logger->info('The business service is running.');
             return 0;
         }
         if (!class_exists('\Google\Protobuf\Internal\Message')) {

@@ -41,6 +41,7 @@ class Bootstrap implements BootstrapInterface
     protected int $workerProcessId;
     protected int $masterPid;
     protected bool $stopStatus = true;
+    protected bool $running = true;
 
     /**
      * @throws ContainerExceptionInterface
@@ -132,32 +133,35 @@ class Bootstrap implements BootstrapInterface
         $this->stopStatus = false;
         $manager = $this->container->get(MainSocketManagerInterface::class);
         //不断的从各个网关读取数据，并分发到对应的控制器方法
-        while (true) {
-            $router = $manager->receive();
-            if ($router === false) {
-                break;
-            }
-            //收到新数据，开一个协程去处理
-            Coroutine::create(function () use ($router) {
-                try {
-                    ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get()->dispatch($router);
-                } catch (Throwable $throwable) {
-                    $message = sprintf(
-                        "%d --> %s in %s on line %d\nThrowable: %s\nStack trace:\n%s",
-                        $throwable->getCode(),
-                        $throwable->getMessage(),
-                        $throwable->getFile(),
-                        $throwable->getLine(),
-                        get_class($throwable),
-                        $throwable->getTraceAsString()
-                    );
-                    $this->logger->error($message);
+        try {
+            while ($this->running) {
+                $router = $manager->receive();
+                if ($router === false) {
+                    break;
                 }
-            });
+                //收到新数据，开一个协程去处理
+                Coroutine::create(function () use ($router) {
+                    try {
+                        ApplicationContext::getContainer()->get(DispatcherFactoryInterface::class)->get()->dispatch($router);
+                    } catch (Throwable $throwable) {
+                        $message = sprintf(
+                            "%d --> %s in %s on line %d\nThrowable: %s\nStack trace:\n%s",
+                            $throwable->getCode(),
+                            $throwable->getMessage(),
+                            $throwable->getFile(),
+                            $throwable->getLine(),
+                            get_class($throwable),
+                            $throwable->getTraceAsString()
+                        );
+                        $this->logger->error($message);
+                    }
+                });
+            }
+            $this->logger->info("Business#$this->workerProcessId stopped.");
+            $this->container->get(EventDispatcherInterface::class)->dispatch(new ServerStop($this->workerProcessId, $this->masterPid));
+        } finally {
+            $this->running = false;
         }
-        $this->logger->info("Business#$this->workerProcessId stopped.");
-        $eventDispatcher = ApplicationContext::getContainer()->get(EventDispatcherInterface::class);
-        $eventDispatcher->dispatch(new ServerStop($this->workerProcessId, $this->masterPid));
     }
 
     /**
@@ -174,6 +178,9 @@ class Bootstrap implements BootstrapInterface
             $manager->unregister();
             $this->logger->info("Business#$this->workerProcessId starting disconnect.");
             $manager->close();
+            while ($this->running) {
+                Coroutine::sleep(0.1);
+            }
         } catch (Throwable) {
         } finally {
             $this->stopStatus = true;

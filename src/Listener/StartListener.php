@@ -65,7 +65,7 @@ class StartListener implements ListenerInterface
         if ($bootstrap->connect() === false) {
             return;
         }
-        if ($bootstrap->register()) {
+        if ($bootstrap->register() === false) {
             return;
         }
         Coroutine::create(function () use ($bootstrap) {

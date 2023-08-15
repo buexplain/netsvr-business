@@ -74,8 +74,7 @@ class MainSocket implements MainSocketInterface
         int    $processCmdGoroutineNum,
         float  $heartbeatInterval,
         int    $packageMaxLength
-    )
-    {
+    ) {
         $this->host = $host;
         $this->port = $port;
         $this->connectTimeout = $connectTimeout;
@@ -147,7 +146,7 @@ class MainSocket implements MainSocketInterface
                     continue;
                 }
                 if ($this->closed === true) {
-                    $this->logger->debug(sprintf($this->loggerPrefix . 'repair socket %s:%s connect ok.', $this->host, $this->port));
+                    $this->logger->info(sprintf($this->loggerPrefix . 'repair socket %s:%s connect ok.', $this->host, $this->port));
                     $this->socket = $socket;
                     break;
                 }
@@ -159,7 +158,7 @@ class MainSocket implements MainSocketInterface
                         continue;
                     }
                     $this->socket = $socket;
-                    $this->logger->debug(sprintf($this->loggerPrefix . 'repair socket %s:%s connect and register ok.', $this->host, $this->port));
+                    $this->logger->info(sprintf($this->loggerPrefix . 'repair socket %s:%s connect and register ok.', $this->host, $this->port));
                     break;
                 }
                 $socket->close();
@@ -180,7 +179,7 @@ class MainSocket implements MainSocketInterface
             throw new ConnectException($socket->errMsg, $socket->errCode);
         }
         $this->socket = $socket;
-        $this->logger->debug(sprintf($this->loggerPrefix . 'socket %s:%s connect ok.', $this->host, $this->port));
+        $this->logger->info(sprintf($this->loggerPrefix . 'socket %s:%s connect ok.', $this->host, $this->port));
     }
 
     private function _send(string $data): int|false
@@ -234,7 +233,7 @@ class MainSocket implements MainSocketInterface
                     $this->host,
                     $this->port,
                 ));
-            } else if ($payload->getCode() === RegisterRespCode::ServerIdInconsistent) {
+            } elseif ($payload->getCode() === RegisterRespCode::ServerIdInconsistent) {
                 $this->logger->error(sprintf(
                     $this->loggerPrefix . 'register socket %s:%s failed, serverId option in file business.php is incorrect.',
                     $this->host,
@@ -290,12 +289,13 @@ class MainSocket implements MainSocketInterface
         $emptyNum = 0;
         while ($this->running) {
             Coroutine::sleep(1);
-            $this->logger->debug(sprintf($this->loggerPrefix . 'closing socket %s:%s, Wait for sendCh cleaning completed: %d', $this->host, $this->port, $this->sendCh->length()));
+            $this->logger->info(sprintf($this->loggerPrefix . 'closing socket %s:%s, wait for sendCh cleaning completed: %d', $this->host, $this->port, $this->sendCh->length()));
             if ($this->sendCh->isEmpty()) {
                 $emptyNum++;
             } else {
                 $emptyNum = 0;
             }
+            //三次判定发送管道里面没有数据，则认为整个服务不会再有发送数据到网关的可能，可以关闭与网关的socket连接
             if ($emptyNum >= 3) {
                 //先让协程退出
                 $this->running = false;
@@ -356,7 +356,7 @@ class MainSocket implements MainSocketInterface
             while ($this->heartbeat->pop($this->heartbeatInterval) === false) {
                 $this->sendCh->push(Constant::PING_MESSAGE);
             }
-            $this->logger->debug($this->loggerPrefix . 'Coroutine:loopHeartbeat exit.');
+            $this->logger->info($this->loggerPrefix . 'loopHeartbeat coroutine exit.');
         });
     }
 
@@ -377,7 +377,7 @@ class MainSocket implements MainSocketInterface
                     $this->repair();
                 }
             }
-            $this->logger->debug($this->loggerPrefix . 'coroutine:loopSend exit.');
+            $this->logger->info($this->loggerPrefix . 'loopSend coroutine exit.');
         });
     }
 

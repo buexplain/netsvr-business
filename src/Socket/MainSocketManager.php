@@ -106,7 +106,7 @@ class MainSocketManager implements MainSocketManagerInterface
                         $this->receiveCh->push($data);
                         continue;
                     }
-                    $this->logger->debug($this->loggerPrefix . 'coroutine:loopTransfer exit.');
+                    $this->logger->info($this->loggerPrefix . 'loopReceive coroutine exit.');
                     unset($this->sockets[$socket->getServerId()]);
                     if (count($this->sockets) == 0) {
                         $this->receiveCh->close();
