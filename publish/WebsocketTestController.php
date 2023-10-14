@@ -47,6 +47,7 @@ class WebsocketTestController
         $update->setData("欢迎登录，现在你的名字叫王富贵！"); //更新成功后下发给用户的数据
         $update->setNewSession("王富贵"); //用户存储在网关的session，用户每次发消息过来，这个值会原封不动的回传给我们
         $update->setNewTopics(["王富贵的私人频道"]); //用户订阅的一些主题，通过这个主题发送消息，则所有订阅了该主题的用户都能收到消息
+        $update->setUniqId($connOpen->getUniqId());
         NetBus::connInfoUpdate($update);
     }
 
@@ -60,8 +61,11 @@ class WebsocketTestController
      */
     public function onMessage(Transfer $transfer, RouterInterface $clientRouter): void
     {
-        $clientRouter->setData($transfer->getUniqId() . '：' . $clientRouter->getData());
-        //下面这两行代码之所以写的有点浪费，纯粹是为了配合压测命令： php bin/hyperf.php websocket:stress
+        $config = \Hyperf\Config\config('business');
+        $workerId = $config['netsvrWorkers'][0]['workerId'];
+        $workerId = str_pad((string)$workerId, 3, '0', STR_PAD_LEFT);
+        $clientRouter->setData($workerId . $clientRouter->getData());
+        //下面这两行代码之所以写的有点浪费，纯粹是为了配合压测命令： php bin/hyperf.php websocket:stress，目的是测试MainSocket与TaskSocket
         if (!empty(NetBus::checkOnline($transfer->getUniqId()))) { //这行代码走的是TaskSocket发送出去的
             NetBus::singleCast($transfer->getUniqId(), $clientRouter->getData()); //这行代码走的是MainSocket或TaskSocket发送出去的，优先走MainSocket
         }
