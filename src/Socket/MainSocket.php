@@ -74,7 +74,8 @@ class MainSocket implements MainSocketInterface
         int    $processCmdGoroutineNum,
         float  $heartbeatInterval,
         int    $packageMaxLength
-    ) {
+    )
+    {
         $this->host = $host;
         $this->port = $port;
         $this->connectTimeout = $connectTimeout;
@@ -199,6 +200,11 @@ class MainSocket implements MainSocketInterface
         //发送成功后，接收注册结果
         $data = $this->socket->recvPacket();
         if ($data === '' || $data === false) {
+            $this->logger->error(sprintf(
+                $this->loggerPrefix . 'register socket %s:%s failed, server not responding.',
+                $this->host,
+                $this->port,
+            ));
             //读取失败
             return false;
         }
