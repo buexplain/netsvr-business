@@ -1,4 +1,9 @@
-# netsvr-business
+# 本库不再维护，请改用 [https://github.com/buexplain/netsvr-business-coroutine](https://github.com/buexplain/netsvr-business-coroutine)
+因为本库的代码设计的过于耦合，比如MainSocket那一块的设计，太复杂！\
+另外与网关的连接处理、业务层的路由处理放在一个库里实现，更是加剧了代码复杂度。\
+综上种种原因，导致单元测试的编写都困难，所以我另起炉灶再写了一个库。
+
+## netsvr-business
 
 这是一个基于hyperf框架开发的，可以快速开发websocket全双工通信业务的包，它基于[https://github.com/buexplain/netsvr](https://github.com/buexplain/netsvr)
 进行工作。
